@@ -9,3 +9,5 @@ data/meeting_room_data/stereo_data_1
 data/meeting_room_data/segment_wav.py
 
 exp
+
+code/__pycache__
