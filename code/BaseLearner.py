@@ -165,6 +165,47 @@ class Learner(ABC):
 				return loss, metric
 			else:
 				return loss
+	
+	def test_epoch_tqdm(self, dataset, return_metric=False):
+		"""Function: Test the model with an epoch of the dataset. 
+		"""
+		self.model.eval()
+		with torch.no_grad():
+			loss = 0
+			idx = 0
+			if return_metric: 
+				metric = {}
+
+			# 使用tqdm包裹dataset迭代器来显示进度条
+			for mic_sig_batch, gt_batch in tqdm(dataset, desc="Testing Epoch"):
+
+				in_batch, gt_batch = self.data_preprocess(mic_sig_batch, gt_batch)
+
+				with torch.cuda.amp.autocast(enabled=self.use_amp):
+					pred_batch = self.model(in_batch)
+					loss_batch = self.loss(pred_batch=pred_batch, gt_batch=gt_batch)
+
+				loss += loss_batch.item()
+
+				if return_metric: 
+					pred_batch, gt_batch = self.predgt2DOA(pred_batch=pred_batch, gt_batch=gt_batch)
+					metric_batch = self.evaluate(pred=pred_batch, gt=gt_batch)
+					if idx==0:
+						for m in metric_batch.keys():
+							metric[m] = 0
+					for m in metric_batch.keys():
+						metric[m] += metric_batch[m].item()
+					idx = idx+1
+
+			loss /= len(dataset)
+			if return_metric: 
+				for m in metric_batch.keys():
+					metric[m] /= len(dataset)
+
+			if return_metric: 
+				return loss, metric
+			else:
+				return loss
 
 	def predict_batch(self, gt_batch, mic_sig_batch, wDNN=True):
 		""" Function: Predict 

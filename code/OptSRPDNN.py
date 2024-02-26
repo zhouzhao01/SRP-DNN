@@ -7,46 +7,55 @@ import time
 import os
 
 class opt():
-    def __init__(self):
+    def __init__(self,param=None):
         time_stamp = time.time()
         local_time = time.localtime(time_stamp)
         self.time = time.strftime('%m%d%H%M', local_time)
+        self.param = param
         
     def parse(self):
         """ Function: Define optional arguments
         """
-        parser = argparse.ArgumentParser(description='Self-supervised learing for multi-channel audio processing')
+        if self.param:
+                for key, value in self.param.items():
+                    setattr(self, key, value)
+                return self
+        else:
+            parser = argparse.ArgumentParser(description='Self-supervised learing for multi-channel audio processing')
 
-        # for both training and test stages
-        parser.add_argument('--gpu-id', type=str, default='7', metavar='GPU', help='GPU ID (default: 7)')
-        parser.add_argument('--workers', type=int, default=16, metavar='Worker', help='number of workers (default: 0)')
-        parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training (default: False)')
-        parser.add_argument('--use-amp', action='store_true', default=False, help='Use automatic mixed precision training (default: False)')
-        parser.add_argument('--seed', type=int, default=1, metavar='Seed', help='random seed (default: 1)')
-        parser.add_argument('--train', action='store_true', default=False, help='change to train stage (default: False)')
-        parser.add_argument('--test', action='store_true', default=False, help='change to test stage (default: False)')
-        parser.add_argument('--checkpoint-start', action='store_true', default=False, help='train model from saved checkpoints (default: False)')
-        parser.add_argument('--time', type=str, default=self.time, metavar='Time', help='time flag')
-    
-        parser.add_argument('--sources', type=int, nargs='+', default=[1,2], metavar='Sources', help='Number of sources (default: 1, 2)')
-        parser.add_argument('--source-state', type=str, default='mobile', metavar='SourceState', help='State of sources (default: Mobile)')
-        parser.add_argument('--localize-mode', type=str, nargs='+', default=['IDL','unkNum', 2], metavar='LocalizeMode', help='Mode for localization (default: Iterative detection and localization method, Unknown source number, Maximum source number is 2)')
-        # e.g., ['IDL','unkNum', 2], ['IDL','kNum', 1], ['PD','kNum', 1]
-        parser.add_argument('--eval-mode', type=str, nargs='+', default=['locata', 'pred', 'eval'], metavar='EvaluationMode', help='Mode for evaluation (default: LOCATA dataset, Predcition, Evaluation)')
-        # e.g., ['locata','pred'], ['locata','eval'], ['simulate', 'all'], ['simulate', 'some']
-        # parser.add_argument('--array', type=str, default='12ch', metavar='ArrayType', help='Type of microphone array (default: 12ch)')
-        parser.add_argument('--gen-on-the-fly', action='store_true', default=False, help='Generate microphone signals on-the-fly (default: False)')
+            # for both training and test stages
+            parser.add_argument('--gpu-id', type=str, default='7', metavar='GPU', help='GPU ID (default: 7)')
+            parser.add_argument('--workers', type=int, default=16, metavar='Worker', help='number of workers (default: 0)')
+            parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training (default: False)')
+            parser.add_argument('--use-amp', action='store_true', default=False, help='Use automatic mixed precision training (default: False)')
+            parser.add_argument('--seed', type=int, default=1, metavar='Seed', help='random seed (default: 1)')
+            parser.add_argument('--train', action='store_true', default=False, help='change to train stage (default: False)')
+            parser.add_argument('--test', action='store_true', default=False, help='change to test stage (default: False)')
+            parser.add_argument('--checkpoint-start', action='store_true', default=False, help='train model from saved checkpoints (default: False)')
+            parser.add_argument('--time', type=str, default=self.time, metavar='Time', help='time flag')
+        
+            parser.add_argument('--sources', type=int, nargs='+', default=[1,2,3], metavar='Sources', help='Number of sources (default: 1, 2)')
+            parser.add_argument('--source-state', type=str, default='mobile', metavar='SourceState', help='State of sources (default: Mobile)') # mobile, static
+            parser.add_argument('--localize-mode', type=str, nargs='+', default=['IDL','unkNum', 2], metavar='LocalizeMode', help='Mode for localization (default: Iterative detection and localization method, Unknown source number, Maximum source number is 2)')
+            # e.g., ['IDL','unkNum', 2], ['IDL','kNum', 1], ['PD','kNum', 1]
+            parser.add_argument('--eval-mode', type=str, nargs='+', default=['locata', 'pred', 'eval'], metavar='EvaluationMode', help='Mode for evaluation (default: LOCATA dataset, Predcition, Evaluation)')
+            # e.g., ['locata','pred'], ['locata','eval'], ['simulate', 'all'], ['simulate', 'some']
+            # parser.add_argument('--array', type=str, default='12ch', metavar='ArrayType', help='Type of microphone array (default: 12ch)')
+            parser.add_argument('--gen-on-the-fly', action='store_true', default=False, help='Generate microphone signals on-the-fly (default: False)')
 
-        # for training stage
-        parser.add_argument('--bs', type=int, nargs='+', default=[1,1,1], metavar='TrainValTestBatch', help='batch size for training, validation and test (default: 1, 1, 1)')
-        parser.add_argument('--epochs', type=int, default=20, metavar='Epoch', help='number of epochs to train (default: 18)')
-        parser.add_argument('--lr', type=float, default=0.001, metavar='LR', help='learning rate (default:0.001)')
+            # for training stage
+            parser.add_argument('--bs', type=int, nargs='+', default=[1,1,1], metavar='TrainValTestBatch', help='batch size for training, validation and test (default: 1, 1, 1)')
+            parser.add_argument('--epochs', type=int, default=20, metavar='Epoch', help='number of epochs to train (default: 18)')
+            parser.add_argument('--lr', type=float, default=0.001, metavar='LR', help='learning rate (default:0.001)')
+            parser.add_argument('--array-name',type=str,default=None)
                    
-        args = parser.parse_args()
-        self.time = args.time
+            args = parser.parse_args()
 
-        if (args.train + args.test)!=1:
-            raise Exception('Stage of train or test is unrecognized')
+            self.time = args.time
+            self.array_name = args.array_name
+
+            if (args.train + args.test)!=1:
+                raise Exception('Stage of train or test is unrecognized')
 
         return args
         
@@ -57,11 +66,11 @@ class opt():
         work_dir = os.path.abspath(os.path.expanduser(work_dir))
         dirs = {}
 
-        dirs['code'] = work_dir + '/SRP-DNN/code'
-        dirs['data'] = work_dir + '/SRP-DNN/data'
+        dirs['code'] = work_dir + '/srp-dnn-1/code'
+        dirs['data'] = work_dir + '/srp-dnn-1/data'
         # dirs['data'] = work_dir + '/data'
-        dirs['gerdata'] = work_dir + '/SRP-DNN/data'
-        dirs['exp'] = work_dir + '/SRP-DNN/exp'
+        dirs['gerdata'] = work_dir + '/srp-dnn-1/data'
+        dirs['exp'] = work_dir + '/srp-dnn-1/exp'
         
         # signal data
         dirs['sousig_train'] = dirs['data'] + '/SouSig/LibriSpeech/train-clean-100'
@@ -78,7 +87,11 @@ class opt():
         dirs['sensig_test'] = dirs['gerdata'] + '/SenSig-test'
 
         # experimental data
-        dirs['log'] = dirs['exp'] + '/' + self.time
+        # dirs['log'] = dirs['exp'] + '/' + self.time
+        if self.array_name != None:
+            dirs['log'] = dirs['exp'] + '/' + self.time + "_" + self.array_name
+        else:
+            dirs['log'] = dirs['exp'] + '/' + self.time
 
         return dirs
 

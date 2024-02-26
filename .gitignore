@@ -1,0 +1,10 @@
+.vscode
+
+data/SenSig-test
+data/SenSig-val
+data/SouSig
+
+data/meeting_room_data/stereo_data
+data/meeting_room_data/stereo_data_1
+
+exp

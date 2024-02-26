@@ -13,6 +13,8 @@ parser.add_argument('--gpu-id', type=str, default='7', metavar='GPU', help='GPU 
 parser.add_argument('--sources', type=int, nargs='+', default=[1, 2], metavar='Sources', help='number of sources (default: 1, 2)')
 parser.add_argument('--source-state', type=str, default='mobile', metavar='SourceState', help='state of sources (default: Mobile)')
 parser.add_argument('--data-op', type=str, default='save_sig', metavar='DataOp', help='operation for generated data (default: Save signal)') # ['save_sig', 'save_RIR', 'read_sig', 'read_RIR']
+parser.add_argument('--array-name', type=str, default='2ch_7', metavar='ArraryName', help='array_topology') 
+
 args = parser.parse_args()
 os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
 
@@ -22,6 +24,8 @@ from Dataset import Parameter
 import Dataset as at_dataset
 
 opts = opt()
+opts.array_name = args.array_name
+print(f"array name:{opts.array_name}")
 dirs = opts.dir()
 
 if (args.data_op == 'save_sig') | (args.data_op == 'save_RIR'):
@@ -31,11 +35,12 @@ if (args.data_op == 'save_sig') | (args.data_op == 'save_RIR'):
 		set_seed(10000)
 
 	elif args.stage == 'val':
-		data_num = 2560
+		data_num = 7
 		set_seed(10001)
 
 	elif args.stage == 'test':
 		data_num = 2560
+		# data_num = 100
 		set_seed(10002)
 
 	else:
@@ -43,7 +48,7 @@ if (args.data_op == 'save_sig') | (args.data_op == 'save_RIR'):
 
 	speed = 343.0	
 	fs = 16000
-	T = 4.112  # Trajectory length (s) 2.064
+	T = 160  # Trajectory length (s) 2.064 4.112->5
 	if args.source_state == 'static':
 		traj_points = 1 # number of RIRs per trajectory
 	elif args.source_state == 'mobile':
@@ -52,11 +57,49 @@ if (args.data_op == 'save_sig') | (args.data_op == 'save_RIR'):
 		raise Exception('Source state mode unrecognized~')
 
 	# Array
-	array = '12ch'
+	array = args.array_name
 	if array == '2ch':
 		array_setup = at_dataset.dualch_array_setup
+		array_locata_name = 'dicit'
+	elif array == '2ch_2':
+		array_setup = at_dataset.dualch_array_setup_2
+		array_locata_name = 'dicit'
+	elif array == '13ch':
+		array_setup = at_dataset.dicit_array_setup_13ch
+		array_locata_name = 'benchmark2'  
+	elif array == '7ch':
+		array_setup = at_dataset.dicit_array_setup_7ch
+		array_locata_name = 'benchmark2'  
+	elif array == '5ch':
+		array_setup = at_dataset.dicit_array_setup_5ch
+		array_locata_name = 'benchmark2'  
+	elif array == '3ch':
+		array_setup = at_dataset.dicit_array_setup_3ch
+		array_locata_name = 'benchmark2' 
+
 	elif array == '12ch':
 		array_setup = at_dataset.benchmark2_array_setup
+		array_locata_name = 'benchmark2'  
+
+	elif array == 'cross_array':
+		array_setup = at_dataset.cross_array
+		array_locata_name = 'cross'  
+	elif array == 'circular_array':
+		array_setup = at_dataset.circular_array
+		array_locata_name = 'circular'  
+	elif array == 'triangle_array':
+		array_setup = at_dataset.triangle_array
+		array_locata_name = 'triangle'  
+
+	elif array == '2ch_7':
+		array_setup = at_dataset.dualch_array_setup_7
+		array_locata_name = '2ch_7'  
+	elif array == '2ch_105':
+		array_setup = at_dataset.dualch_array_setup_105
+		array_locata_name = '2ch_105'  
+	elif array == '2ch_14':
+		array_setup = at_dataset.dualch_array_setup_14
+		array_locata_name = '2ch_14' 
 
 	# Source signal
 	sourceDataset = at_dataset.LibriSpeechDataset(
@@ -67,29 +110,57 @@ if (args.data_op == 'save_sig') | (args.data_op == 'save_RIR'):
 		return_vad = True, 
 		clean_silence = True)
 
+	# # Noise signal
+	# noiseDataset = at_dataset.NoiseDataset(
+	# 	T = T, 
+	# 	fs = fs, 
+	# 	nmic = array_setup.mic_pos.shape[0], 
+	# 	noise_type = Parameter(['diffuse'], discrete=True), 
+	# 	noise_path = dirs['noisig_'+args.stage], 
+	# 	c = speed)
+
 	# Noise signal
 	noiseDataset = at_dataset.NoiseDataset(
 		T = T, 
 		fs = fs, 
 		nmic = array_setup.mic_pos.shape[0], 
-		noise_type = Parameter(['diffuse'], discrete=True), 
-		noise_path = dirs['noisig_'+args.stage], 
+		noise_type = Parameter(['spatial_white'], discrete=True), 
+		noise_path = None, 
 		c = speed)
 
 	# Room acoustics
+	# dataset = at_dataset.RandomMicSigDataset( 
+	# 	sourceDataset = sourceDataset,
+	# 	num_source = Parameter(args.sources, discrete=True),
+	# 	source_state = args.source_state,
+	# 	room_sz = Parameter([3,3,2.5], [10,8,6]),
+	# 	T60 = Parameter(0.1, 1.0),
+	# 	abs_weights = Parameter([0.5]*6, [1.0]*6),
+	# 	array_setup = array_setup,
+	# 	array_pos = Parameter([0.1,0.1,0.1], [0.9,0.9,0.5]),
+	# 	noiseDataset = noiseDataset,
+	# 	SNR = Parameter(0, 25),
+	# 	nb_points = traj_points, 
+	# 	dataset_sz = data_num,
+	# 	c = speed, 
+	# 	transforms = None,
+	# 	return_acoustic_scene = True,
+	# 	save_src_noi = False,
+	# 	)
+	
 	dataset = at_dataset.RandomMicSigDataset( 
 		sourceDataset = sourceDataset,
-		num_source = Parameter(args.sources, discrete=True),
+		num_source = Parameter(args.sources, discrete=True),  
 		source_state = args.source_state,
 		room_sz = Parameter([3,3,2.5], [10,8,6]),
-		T60 = Parameter(0.1, 1.0),
+		T60 = Parameter(0.2, 1.3), # T60 = Parameter(0.2, 1.3),
 		abs_weights = Parameter([0.5]*6, [1.0]*6),
 		array_setup = array_setup,
 		array_pos = Parameter([0.1,0.1,0.1], [0.9,0.9,0.5]),
 		noiseDataset = noiseDataset,
-		SNR = Parameter(0, 25),
-		nb_points = traj_points, 
-		dataset_sz = data_num,
+		SNR = Parameter(5, 30),	
+		nb_points = traj_points,
+		dataset_sz= data_num,
 		c = speed, 
 		transforms = None,
 		return_acoustic_scene = True,

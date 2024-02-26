@@ -18,6 +18,8 @@ import webrtcvad
 import gpuRIR
 from utils import load_file
 
+from FRAM_RIR import FRAM_RIR
+
 # %% Util functions
 
 def acoustic_power(s):
@@ -84,7 +86,7 @@ ArraySetup = namedtuple('ArraySetup', 'arrayType, orV, mic_scale, mic_pos, mic_o
 
 # Named tuple with the characteristics of a microphone array and definitions of dual-channel array
 dualch_array_setup = ArraySetup(arrayType='planar', 
-    orV = np.array([0.0, 1.0, 0.0]), # ??? put the source in oneside (indicated by orV) of the array
+	orV = np.array([0.0, 1.0, 0.0]), # ??? put the source in oneside (indicated by orV) of the array
 	mic_scale = Parameter(1), # !!! half of the mic_distance should be smaller than the minimum separation between the array and the walls defined by array_pos
 	mic_pos = np.array(((
 			(0.04, 0.0, 0.0),
@@ -94,28 +96,231 @@ dualch_array_setup = ArraySetup(arrayType='planar',
 	mic_pattern = 'omni'
 )
 
+dualch_array_setup_7 = ArraySetup(arrayType='planar', 
+    orV = np.array([0.0, 1.0, 0.0]), # ??? put the source in oneside (indicated by orV) of the array
+	mic_scale = Parameter(1), # !!! half of the mic_distance should be smaller than the minimum separation between the array and the walls defined by array_pos
+	mic_pos = np.array(((
+			(0.035, 0.0, 0.0),
+			(-0.035, 0.0, 0.0),
+	))), # Actural position is mic_scale*mic_pos
+	mic_orV = None, # Invalid for omnidirectional microphones
+	mic_pattern = 'omni'
+)
+
+dualch_array_setup_105 = ArraySetup(arrayType='planar', 
+    orV = np.array([0.0, 1.0, 0.0]), # ??? put the source in oneside (indicated by orV) of the array
+	mic_scale = Parameter(1), # !!! half of the mic_distance should be smaller than the minimum separation between the array and the walls defined by array_pos
+	mic_pos = np.array(((
+			(0.0525, 0.0, 0.0),
+			(-0.0525, 0.0, 0.0),
+	))), # Actural position is mic_scale*mic_pos
+	mic_orV = None, # Invalid for omnidirectional microphones
+	mic_pattern = 'omni'
+)
+
+dualch_array_setup_14 = ArraySetup(arrayType='planar', 
+    orV = np.array([0.0, 1.0, 0.0]), # ??? put the source in oneside (indicated by orV) of the array
+	mic_scale = Parameter(1), # !!! half of the mic_distance should be smaller than the minimum separation between the array and the walls defined by array_pos
+	mic_pos = np.array(((
+			(0.07, 0.00, 0.0),
+			(-0.07, 0.00, 0.0),
+	))), # Actural position is mic_scale*mic_pos
+	mic_orV = None, # Invalid for omnidirectional microphones
+	mic_pattern = 'omni'
+)
+
 # Named tuple with the characteristics of a microphone array and definitions of the LOCATA arrays
 
-dicit_array_setup = ArraySetup(arrayType='planar',
+# dicit_array_setup = ArraySetup(arrayType='planar',
+#     orV = np.array([0.0, 1.0, 0.0]),
+# 	mic_scale = Parameter(1),
+#     mic_pos = np.array((( 0.96, 0.00, 0.00),
+# 						( 0.64, 0.00, 0.00),
+# 						( 0.32, 0.00, 0.00),
+# 						( 0.16, 0.00, 0.00),
+# 						( 0.08, 0.00, 0.00),
+# 						( 0.04, 0.00, 0.00),
+# 						( 0.00, 0.00, 0.00),
+# 						( 0.96, 0.00, 0.32),
+# 						(-0.04, 0.00, 0.00),
+# 						(-0.08, 0.00, 0.00),
+# 						(-0.16, 0.00, 0.00),
+# 						(-0.32, 0.00, 0.00),
+# 						(-0.64, 0.00, 0.00),
+# 						(-0.96, 0.00, 0.00),
+# 						(-0.96, 0.00, 0.32))),
+#     mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (15,1)),
+#     mic_pattern = 'omni'
+# )
+
+dicit_array_setup_13ch = ArraySetup(arrayType='planar',
     orV = np.array([0.0, 1.0, 0.0]),
 	mic_scale = Parameter(1),
-    mic_pos = np.array((( 0.96, 0.00, 0.00),
+    mic_pos = np.array((
+						( 0.96, 0.00, 0.00),
 						( 0.64, 0.00, 0.00),
 						( 0.32, 0.00, 0.00),
 						( 0.16, 0.00, 0.00),
 						( 0.08, 0.00, 0.00),
 						( 0.04, 0.00, 0.00),
 						( 0.00, 0.00, 0.00),
-						( 0.96, 0.00, 0.32),
 						(-0.04, 0.00, 0.00),
 						(-0.08, 0.00, 0.00),
 						(-0.16, 0.00, 0.00),
 						(-0.32, 0.00, 0.00),
 						(-0.64, 0.00, 0.00),
-						(-0.96, 0.00, 0.00),
-						(-0.96, 0.00, 0.32))),
+						(-0.96, 0.00, 0.00),)),
     mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (15,1)),
     mic_pattern = 'omni'
+)
+
+dicit_array_setup_7ch = ArraySetup(arrayType='planar',
+    orV = np.array([0.0, 1.0, 0.0]),
+	mic_scale = Parameter(1),
+    mic_pos = np.array((
+						# ( 0.96, 0.00, 0.00),
+						# ( 0.64, 0.00, 0.00),
+						# ( 0.32, 0.00, 0.00),
+						( 0.16, 0.00, 0.00),
+						( 0.08, 0.00, 0.00),
+						( 0.04, 0.00, 0.00),
+						( 0.00, 0.00, 0.00),
+						(-0.04, 0.00, 0.00),
+						(-0.08, 0.00, 0.00),
+						(-0.16, 0.00, 0.00),
+						# (-0.32, 0.00, 0.00),
+						# (-0.64, 0.00, 0.00),
+						# (-0.96, 0.00, 0.00),
+						)),
+    mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (15,1)),
+    mic_pattern = 'omni'
+)
+
+dicit_array_setup_8ch = ArraySetup(arrayType='planar',
+    orV = np.array([0.0, 1.0, 0.0]),
+	mic_scale = Parameter(1),
+    mic_pos = np.array((
+						# ( 0.96, 0.00, 0.00),
+						# ( 0.64, 0.00, 0.00),
+						# ( 0.32, 0.00, 0.00),
+						( 0.035*3, 0.00, 0.00),
+						( 0.035*2, 0.00, 0.00),
+						( 0.035, 0.00, 0.00),
+						( 0.00, 0.00, 0.00),
+						(-0.035, 0.00, 0.00),
+						(-0.035*2, 0.00, 0.00),
+						(-0.035*3, 0.00, 0.00),
+						(-0.035*4, 0.00, 0.00),
+						# (-0.64, 0.00, 0.00),
+						# (-0.96, 0.00, 0.00),
+						)),
+    mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (8,1)),
+    mic_pattern = 'omni'
+)
+
+dicit_array_setup_5ch = ArraySetup(arrayType='planar',
+    orV = np.array([0.0, 1.0, 0.0]),
+	mic_scale = Parameter(1),
+    mic_pos = np.array((
+						# ( 0.96, 0.00, 0.00),
+						# ( 0.64, 0.00, 0.00),
+						# ( 0.32, 0.00, 0.00),
+						# ( 0.16, 0.00, 0.00),
+						( 0.08, 0.00, 0.00),
+						( 0.04, 0.00, 0.00),
+						( 0.00, 0.00, 0.00),
+						(-0.04, 0.00, 0.00),
+						(-0.08, 0.00, 0.00),
+						# (-0.16, 0.00, 0.00),
+						# (-0.32, 0.00, 0.00),
+						# (-0.64, 0.00, 0.00),
+						# (-0.96, 0.00, 0.00),
+						)),
+    mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (15,1)),
+    mic_pattern = 'omni'
+)
+
+dicit_array_setup_3ch = ArraySetup(arrayType='planar',
+    orV = np.array([0.0, 1.0, 0.0]),
+	mic_scale = Parameter(1),
+    mic_pos = np.array((
+						# ( 0.96, 0.00, 0.00),
+						# ( 0.64, 0.00, 0.00),
+						# ( 0.32, 0.00, 0.00),
+						# ( 0.16, 0.00, 0.00),
+						# ( 0.08, 0.00, 0.00),
+						( 0.04, 0.00, 0.00),
+						( 0.00, 0.00, 0.00),
+						(-0.04, 0.00, 0.00),
+						# (-0.08, 0.00, 0.00),
+						# (-0.16, 0.00, 0.00),
+						# (-0.32, 0.00, 0.00),
+						# (-0.64, 0.00, 0.00),
+						# (-0.96, 0.00, 0.00),
+						)),
+    mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (15,1)),
+    mic_pattern = 'omni'
+)
+
+triangle_array = ArraySetup(arrayType='planar',
+    orV = np.array([0.0, 1.0, 0.0]),
+	mic_scale = Parameter(1),
+    mic_pos = np.array((
+						# ( 0.96, 0.00, 0.00),
+						# ( 0.64, 0.00, 0.00),
+						# ( 0.32, 0.00, 0.00),
+						# ( 0.16, 0.00, 0.00),
+						# ( 0.08, 0.00, 0.00),
+						( 0.04, 0.00, 0.00),
+						( 0.00, 0.04*1.732, 0.00),
+						(-0.04, 0.00, 0.00),
+						# (-0.08, 0.00, 0.00),
+						# (-0.16, 0.00, 0.00),
+						# (-0.32, 0.00, 0.00),
+						# (-0.64, 0.00, 0.00),
+						# (-0.96, 0.00, 0.00),
+						)),
+    mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (3,1)),
+    mic_pattern = 'omni'
+)
+
+cross_array = ArraySetup(arrayType='planar',
+    orV = np.array([0.0, 1.0, 0.0]),
+	mic_scale = Parameter(1),
+    mic_pos = np.array((
+						# ( 0.96, 0.00, 0.00),
+						# ( 0.64, 0.00, 0.00),
+						# ( 0.32, 0.00, 0.00),
+						# ( 0.16, 0.00, 0.00),
+						# ( 0.08, 0.00, 0.00),
+						( 0.04, 0.00, 0.00),
+						( 0.00, 0.00, 0.00),
+						(-0.04, 0.00, 0.00),
+						(0.00,  0.04, 0.00),
+						(0.00, -0.04, 0.00),
+						# (-0.08, 0.00, 0.00),
+						# (-0.16, 0.00, 0.00),
+						# (-0.32, 0.00, 0.00),
+						# (-0.64, 0.00, 0.00),
+						# (-0.96, 0.00, 0.00),
+						)),
+    mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (5,1)),
+    mic_pattern = 'omni'
+)
+
+circular_array = ArraySetup(arrayType='planar',
+    orV = np.array([0.0, 1.0, 0.0]),
+	mic_scale = Parameter(1),
+    mic_pos = np.array((( 0.04, 0.00, 0.00),
+						(-0.04, 0.00, 0.00),
+						(0.00,  0.04, 0.00),
+						(0.00, -0.04, 0.00),
+						(0.02,  0.02, 0.00),
+						(0.02,  -0.02, 0.00),
+						(-0.02,  0.02, 0.00),
+						(-0.02, -0.02, 0.00),)),
+    mic_orV = np.tile(np.array([[0.0, 1.0, 0.0]]), (8,1)),
+    mic_pattern = 'omni',
 )
 
 dummy_array_setup = ArraySetup(arrayType='planar',
@@ -307,14 +512,39 @@ class AcousticScene:
 			# 					nb_img, Tmax, self.fs, Tdiff=Tdiff, orV_rcv=self.array_setup.mic_orV, 
 			# 					mic_pattern=self.array_setup.mic_pattern) ]
 			# RIRs = np.concatenate(RIRs_list, axis=0)
+
 			RIRs = gpuRIR.simulateRIR(self.room_sz, self.beta, self.traj_pts[:,:,source_idx], self.mic_pos,
 						nb_img, Tmax, self.fs, Tdiff=Tdiff, orV_rcv=self.array_setup.mic_orV, 
 						mic_pattern=self.array_setup.mic_pattern)
-			mic_sig = gpuRIR.simulateTrajectory(self.source_signal[:,source_idx], RIRs, timestamps=self.timestamps, fs=self.fs)
-			mic_sig = mic_sig[0:nsample,:]
 
 			dp_RIRs = gpuRIR.simulateRIR(self.room_sz, self.beta, self.traj_pts[:,:,source_idx], self.mic_pos, [1,1,1],
-							0.1, self.fs, orV_rcv=self.array_setup.mic_orV, mic_pattern=self.array_setup.mic_pattern)
+							0.1, self.fs, orV_rcv=self.array_setup.mic_orV, mic_pattern=self.array_setup.mic_pattern) # direct path RIR
+			
+			
+			# ## Use Tencent RIR generator
+			# RIRs, dp_RIRs = FRAM_RIR(self.mic_pos, 
+			# 	   self.fs, 
+			# 	   self.T60, 
+			# 	   self.room_sz, 
+			# 	   self.traj_pts[:,:,source_idx], 
+			# 	#    num_src=len(self.traj_pts[:,:,source_idx]), 
+			# 	   num_src=1, 
+			# 	   direct_range=(-6, 50), 
+			# 	   n_image=(512, 2049), 
+			# 	   src_pattern='omni', 
+			# 	   src_orientation_rad=None, 
+			# 	   mic_pattern='omni', 
+			# 	   mic_orientation_rad=None)
+			
+			# RIRs = RIRs.transpose(1, 0, 2)
+			# dp_RIRs = dp_RIRs.transpose(1, 0, 2)
+			
+			# print(source_idx)
+			# print(self.source_signal.shape)
+
+			mic_sig = gpuRIR.simulateTrajectory(self.source_signal[:,source_idx], RIRs, timestamps=self.timestamps, fs=self.fs)
+			mic_sig = mic_sig[0:nsample,:]
+			
 			dp_mic_sig = gpuRIR.simulateTrajectory(self.source_signal[:,source_idx], dp_RIRs, timestamps=self.timestamps, fs=self.fs)
 			dp_mic_sig = dp_mic_sig[0:nsample,:]
 
@@ -917,6 +1147,10 @@ class RandomMicSigDataset(Dataset):
 				src_pos_min[np.nonzero(self.array_setup.orV)] = array_pos[np.nonzero(self.array_setup.orV)]
 			else:
 				src_pos_max[np.nonzero(self.array_setup.orV)] = array_pos[np.nonzero(self.array_setup.orV)]
+
+			# src_pos_min[2] = array_pos[2]
+			# src_pos_max[2] = array_pos[2]
+
 			# src_pos_min[np.nonzero(self.array_setup.orV)] += self.dis.getValue() # control the distance between sources and array
 
 		traj_pts = np.zeros((self.nb_points, 3, num_source))

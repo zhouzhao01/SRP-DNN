@@ -13,7 +13,7 @@ opts = opt()
 args = opts.parse()
 dirs = opts.dir()
  
-os.environ["OMP_NUM_THREADS"] = str(8) # limit the threads to reduce cpu overloads, will speed up when there are lots of CPU cores on the running machine
+# os.environ["OMP_NUM_THREADS"] = str(8) # limit the threads to reduce cpu overloads, will speed up when there are lots of CPU cores on the running machine
 os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
 
 import torch
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 	# %% Dataset
 	speed = 343.0
 	fs = 16000
-	T = 20 # Trajectory length (s) 
+	T = 5 # Trajectory length (s) # 20s->5s  
 	if args.source_state == 'static':
 		traj_points = 1 # number of RIRs per trajectory
 	elif args.source_state == 'mobile':
@@ -52,13 +52,55 @@ if __name__ == "__main__":
 		print('Source state model unrecognized~')
 
 	# Array
-	array = '12ch'
+	array = args.array_name
+
 	if array == '2ch':
 		array_setup = at_dataset.dualch_array_setup
 		array_locata_name = 'dicit'
+	elif array == '2ch_2':
+		array_setup = at_dataset.dualch_array_setup_2
+		array_locata_name = 'dicit'
+	elif array == '13ch':
+		array_setup = at_dataset.dicit_array_setup_13ch
+		array_locata_name = 'benchmark2'  # Name of the array in the LOCATA dataset
+	elif array == '7ch':
+		array_setup = at_dataset.dicit_array_setup_7ch
+		array_locata_name = 'benchmark2'  # Name of the array in the LOCATA dataset
+	elif array == '5ch':
+		array_setup = at_dataset.dicit_array_setup_5ch
+		array_locata_name = 'benchmark2'  # Name of the array in the LOCATA dataset
+	elif array == '3ch':
+		array_setup = at_dataset.dicit_array_setup_3ch
+		array_locata_name = 'benchmark2'  # Name of the
+	elif array == '8ch':
+		array_setup = at_dataset.dicit_array_setup_8ch
+		array_locata_name = 'benchmark2'  # Name of the
+
 	elif array == '12ch':
 		array_setup = at_dataset.benchmark2_array_setup
 		array_locata_name = 'benchmark2'  # Name of the array in the LOCATA dataset
+
+	elif array == 'cross_array':
+		array_setup = at_dataset.cross_array
+		array_locata_name = 'cross'  # Name of the array in the LOCATA dataset
+	elif array == 'circular_array':
+		array_setup = at_dataset.circular_array
+		array_locata_name = 'circular'  # Name of the array in the LOCATA dataset
+	elif array == 'triangle_array':
+		array_setup = at_dataset.triangle_array
+		array_locata_name = 'triangle'  # Name of the array in the LOCATA dataset
+	
+	elif array == '2ch_7':
+		array_setup = at_dataset.dualch_array_setup_7
+		array_locata_name = 'cross'  # Name of the array in the LOCATA dataset
+	elif array == '2ch_105':
+		array_setup = at_dataset.dualch_array_setup_105
+		array_locata_name = 'circular'  # Name of the array in the LOCATA dataset
+	elif array == '2ch_14':
+		array_setup = at_dataset.dualch_array_setup_14
+		array_locata_name = 'triangle'  # Name of the array in the LOCATA dataset
+
+	
 
 	if args.gen_on_the_fly:
 		# Source signal
@@ -136,7 +178,7 @@ if __name__ == "__main__":
 			array_setup = array_setup,
 			array_pos = Parameter([0.1,0.1,0.1], [0.9,0.9,0.5]), # Ensure a minimum separation between the array and the walls
 			noiseDataset = noiseDataset_train,
-			SNR = Parameter(5, 30), 	
+			SNR = Parameter(5, 30),	
 			nb_points = traj_points,	
 			dataset_sz= 1000,
 			c = speed, 
@@ -147,14 +189,14 @@ if __name__ == "__main__":
 			num_source = Parameter(args.sources, discrete=True),  
 			source_state = args.source_state,
 			room_sz = Parameter([3,3,2.5], [10,8,6]),
-			T60 = Parameter(0.2, 1.3),
+			T60 = Parameter(0.2, 1.3),	
 			abs_weights = Parameter([0.5]*6, [1.0]*6),
 			array_setup = array_setup,
 			array_pos = Parameter([0.1,0.1,0.1], [0.9,0.9,0.5]),
 			noiseDataset = noiseDataset_val,
-			SNR = Parameter(5, 30),
+			SNR = Parameter(5, 30),	
 			nb_points = traj_points,
-			dataset_sz= 1000,
+			dataset_sz= 100, # 1000->100
 			c = speed, 
 			transforms = [segmenting]
 		)
@@ -163,14 +205,14 @@ if __name__ == "__main__":
 			num_source = Parameter(args.sources, discrete=True),  
 			source_state = args.source_state,
 			room_sz = Parameter([3,3,2.5], [10,8,6]),
-			T60 = Parameter(0.2, 1.3),
+			T60 = Parameter(0.2, 1.3), 
 			abs_weights = Parameter([0.5]*6, [1.0]*6),
 			array_setup = array_setup,
 			array_pos = Parameter([0.1,0.1,0.1], [0.9,0.9,0.5]),
 			noiseDataset = noiseDataset_test,
 			SNR = Parameter(5, 30),
 			nb_points = traj_points,
-			dataset_sz= 1000,
+			dataset_sz= 10,
 			c = speed, 
 			transforms = [segmenting]
 		)
@@ -283,10 +325,11 @@ if __name__ == "__main__":
 		source_num_mode = args.localize_mode[1]
 		
 		# Metric
-		metric_setting = {'ae_mode':['azi', 'ele'], 'ae_TH':30, 'useVAD':True, 'vad_TH':[2/3, 0.3],'metric_unfold':True}
+		metric_setting = {'ae_mode':['azi', 'ele'], 'ae_TH':30, 'useVAD':True, 'vad_TH':[2/3, 0.3],'metric_unfold':False}
 		nmetric = 3 + len(metric_setting['ae_mode']) * 2
 
 		# Load model
+		dirs['log'] = "/home/zhaozhou/srp-dnn-1/exp/00000002"
 		learner.resume_checkpoint(checkpoints_dir=dirs['log'], from_latest=False)
 
 		if dataset_mode == 'simulate':
@@ -309,7 +352,7 @@ if __name__ == "__main__":
 				T60 = np.array((0.4,))  # Reverberation times to analyze
 				SNR = np.array((5,))  	# SNRs to analyze
 				dataset_test.dataset_sz = 2
-				ins_idx = 1
+				ins_idx = 0
 
 			metrics = np.zeros((nmetric, len(T60), len(SNR)))
 			metrics_woDNN = np.zeros((nmetric, len(T60), len(SNR)))
@@ -320,11 +363,18 @@ if __name__ == "__main__":
 					dataset_test.SNR = Parameter(SNR[j])
 					set_random_seed(args.seed)
 					dataloader_test = torch.utils.data.DataLoader(dataset=dataset_test, batch_size=args.bs[2], shuffle=False, **kwargs)
-					pred, gt, mic_sig = learner.predict(dataloader_test, return_predgt=True, metric_setting=None, wDNN=True)
-					pred_woDNN, _, = learner.predict(dataloader_test, return_predgt=True, metric_setting=None, wDNN=False)
+
+					# pred, gt, mic_sig = learner.predict(dataloader_test, return_predgt=True, metric_setting=None, wDNN=True)
+					# pred_woDNN, _, _ = learner.predict(dataloader_test, return_predgt=True, metric_setting=None, wDNN=False)
+
+					# pred, gt, mic_sig = pred[0], gt[0], mic_sig[0]
+					# pred_woDNN = pred_woDNN[0]
 
 					metrics[:, i, j], metric_keys = learner.evaluate(pred=pred, gt=gt, metric_setting=metric_setting)					
 					metrics_woDNN[:, i, j], _ = learner.evaluate(pred=pred_woDNN, gt=gt, metric_setting=metric_setting)
+
+					pred, gt, mic_sig, metrics = learner.predict(dataloader_test, return_predgt=True, metric_setting=True, wDNN=True)
+					pred_woDNN, _, _ , metrics_woDNN = learner.predict(dataloader_test, return_predgt=True, metric_setting=True, wDNN=False)
 					
 					doa_gt = (gt['doa'] * 180 / np.pi).cpu().numpy() 	# (nb, nt, 2, ns)
 					vad_gt = (gt['vad_sources']).cpu().numpy()	# (nb, nt, ns)
