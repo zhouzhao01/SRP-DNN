@@ -262,8 +262,8 @@ class Learner(ABC):
 			if metric_setting is not None:
 				metric = {}
 
-			for mic_sig_batch, gt_batch in dataset:
-				print('Dataloading: ' + str(idx+1))
+			for mic_sig_batch, gt_batch in tqdm(dataset):
+				# print('Dataloading: ' + str(idx+1))
 				pred_batch, gt_batch, mic_sig_batch = self.predict_batch(gt_batch, mic_sig_batch, wDNN)
 
 				if (metric_setting is not None):

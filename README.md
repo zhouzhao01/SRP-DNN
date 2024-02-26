@@ -1,3 +1,12 @@
+# Notes 
+Demo 代码为 code/Demo_2ch.ipynb
+
+训练代码为 code/RunSRPDNN.py
+
+模型代码为 code/ModelSRPDNN.py
+
+数据集准备代码为 code/Dataset.py 同时，该文件还包含阵列定义。
+
 # SRP-DNN
 A python implementation of “**<a href="https://ieeexplore.ieee.org/document/9746624" target="_blank">SRP-DNN: Learning direct-path phase difference for multiple moving sound source localization</a>**”, IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), 2022.
 
